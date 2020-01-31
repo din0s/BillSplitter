@@ -2,6 +2,7 @@ import 'package:bill_splitter/bloc/money/exports.dart';
 import 'package:bill_splitter/entities/denomination.dart';
 import 'package:bill_splitter/fragments/circle_button.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/widgets.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 class MoneyButton extends StatelessWidget {
@@ -32,8 +33,16 @@ class MoneyButton extends StatelessWidget {
             onTap: () => _add(denom),
             onLongPress: () => _remove(denom),
           ),
-          SizedBox(width: 12),
-          Text("${BlocProvider.of<MoneyBloc>(context).state.balance[denom]}"),
+          Padding(
+            padding: EdgeInsets.only(left: 4),
+            child: Container(
+              width: 14,
+              child: Text(
+                "${BlocProvider.of<MoneyBloc>(context).state.balance[denom]}",
+                softWrap: true,
+              ),
+            ),
+          ),
         ],
       ),
     );
@@ -58,7 +67,7 @@ class Bill extends MoneyButton {
             child: Center(child: Text(denomLabel(denom))),
             color: Colors.green,
             padding: EdgeInsets.all(12),
-            width: 85,
+            width: 80,
           ),
           denom,
         );

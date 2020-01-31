@@ -13,6 +13,9 @@ class MoneyState {
   }
 
   bool add(Denomination denomination) {
+    if (balance[denomination] >= 99) {
+      return false;
+    }
     balance[denomination]++;
     return true;
   }
