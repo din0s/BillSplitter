@@ -1,17 +1,19 @@
-abstract class MoneyEvent {
-  final int amount;
+import 'package:bill_splitter/entities/denomination.dart';
 
-  MoneyEvent(this.amount);
+abstract class MoneyEvent {}
+
+abstract class BalanceEvent extends MoneyEvent {
+  final Denomination denomination;
+
+  BalanceEvent(this.denomination);
 }
 
-class Add extends MoneyEvent {
-  Add(int amount) : super(amount);
+class Add extends BalanceEvent {
+  Add(Denomination denom) : super(denom);
 }
 
-class Remove extends MoneyEvent {
-  Remove(int amount) : super(amount);
+class Remove extends BalanceEvent {
+  Remove(Denomination denom) : super(denom);
 }
 
-class Clear extends MoneyEvent {
-  Clear() : super(0);
-}
+class Clear extends MoneyEvent {}

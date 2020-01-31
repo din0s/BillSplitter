@@ -1,6 +1,7 @@
 import 'package:bill_splitter/bloc/money/exports.dart';
-import 'package:bill_splitter/fragments/circle_button.dart';
-import 'package:bill_splitter/user_data.dart';
+import 'package:bill_splitter/entities/denomination.dart';
+import 'package:bill_splitter/entities/user_data.dart';
+import 'package:bill_splitter/fragments/money_button.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -12,33 +13,26 @@ class UserContainer extends StatefulWidget {
 }
 
 class _UserContainerState extends State<UserContainer> {
-  final _balance = MoneyBloc();
   final _bController = TextEditingController(text: "0.0");
 
   @override
   void dispose() {
-    _balance.close();
     _bController.dispose();
     super.dispose();
   }
 
-  void _addAmt(int amt) {
-    _balance.add(Add(amt));
-  }
-
-  void _removeAmt(int amt) {
-    _balance.add(Remove(amt));
-  }
-
   @override
   Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        _buildNameField(),
-        _buildPriceField(),
-        _buildMoneySelector(),
-      ],
+    return BlocProvider<MoneyBloc>(
+      create: (context) => MoneyBloc(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: <Widget>[
+          _buildNameField(),
+          _buildPriceField(),
+          _buildMoneySelector(),
+        ],
+      ),
     );
   }
 
@@ -86,64 +80,65 @@ class _UserContainerState extends State<UserContainer> {
   }
 
   Widget _buildMoneySelector() {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: <Widget>[
-        BlocListener<MoneyBloc, int>(
-          bloc: _balance,
-          listener: (context, state) {
-            _bController.text = "${state / 100.0}";
-          },
-          child: TextFormField(
-            controller: _bController,
-            enabled: false,
-            onSaved: (val) => {widget.data.balance = _balance.state / 100.0},
-            decoration: InputDecoration(
-              labelText: "Balance",
-              suffix: Text("€", style: TextStyle(fontSize: 18)),
+    return BlocConsumer<MoneyBloc, MoneyState>(
+      listener: (context, state) => _bController.text = "${state.total}",
+      builder: (context, state) {
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: <Widget>[
+            Row(
+              children: <Widget>[
+                Expanded(
+                  child: TextFormField(
+                    controller: _bController,
+                    enabled: false,
+                    onSaved: (val) => widget.data.balance = state.balance,
+                    decoration: InputDecoration(
+                      labelText: "Balance",
+                      suffix: Text("€", style: TextStyle(fontSize: 18)),
+                    ),
+                  ),
+                ),
+                Padding(
+                  padding: EdgeInsets.only(left: 8),
+                  child: MaterialButton(
+                    child: Text("Clear"),
+                    color: Colors.red,
+                    onPressed: () {
+                      BlocProvider.of<MoneyBloc>(context).add(Clear());
+                    },
+                    minWidth: 20,
+                  ),
+                ),
+              ],
             ),
-          ),
-        ),
-        SizedBox(height: 12),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Coin("10c", 10, _addAmt, _removeAmt),
-            Coin("20c", 20, _addAmt, _removeAmt),
-            Coin("50c", 50, _addAmt, _removeAmt),
-            Coin("1e", 100, _addAmt, _removeAmt),
-            Coin("2e", 200, _addAmt, _removeAmt),
+            SizedBox(height: 12),
+            Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              children: <Widget>[
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    Coin(Denomination.CENT_10),
+                    Coin(Denomination.CENT_20),
+                    Coin(Denomination.CENT_50),
+                    Coin(Denomination.EURO_1),
+                    Coin(Denomination.EURO_2),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                  children: <Widget>[
+                    Bill(Denomination.EURO_5),
+                    Bill(Denomination.EURO_10),
+                    Bill(Denomination.EURO_20),
+                  ],
+                ),
+              ],
+            ),
           ],
-        ),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: <Widget>[
-            Bill("5e", 500, _addAmt, _removeAmt),
-            Bill("10e", 1000, _addAmt, _removeAmt),
-            Bill("20e", 2000, _addAmt, _removeAmt),
-          ],
-        ),
-      ],
+        );
+      },
     );
   }
-}
-
-class Coin extends CircleButton {
-  Coin(String text, int amt, dynamic add, dynamic remove)
-      : super(
-          Text(text),
-          () => add(amt),
-          onLongPress: () => remove(amt),
-          color: Colors.orange,
-        );
-}
-
-class Bill extends FlatButton {
-  Bill(String text, int amt, dynamic add, dynamic remove)
-      : super(
-          child: Text(text),
-          onPressed: () => add(amt),
-          onLongPress: () => remove(amt),
-          color: Colors.green,
-        );
 }

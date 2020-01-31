@@ -6,9 +6,12 @@ class CircleButton extends SizedBox {
   final dynamic onLongPress;
   final Color color;
 
-  CircleButton(this.content, this.onPress,
-      {this.onLongPress, this.color = Colors.blueAccent})
-      : super(
+  CircleButton(
+    this.content, {
+    this.onPress,
+    this.onLongPress,
+    this.color = Colors.blueAccent,
+  }) : super(
           width: 32,
           child: InkWell(
             onLongPress: onLongPress,

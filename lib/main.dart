@@ -1,6 +1,6 @@
+import 'package:bill_splitter/entities/user_data.dart';
 import 'package:bill_splitter/fragments/circle_button.dart';
 import 'package:bill_splitter/user_container.dart';
-import 'package:bill_splitter/user_data.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -109,12 +109,12 @@ class _MyHomePageState extends State<MyHomePage> {
               }),
               Row(
                 children: <Widget>[
-                  CircleButton(Text("+"), _addUser),
+                  CircleButton(Text("+"), onPress: _addUser),
                   SizedBox(width: 8),
                   if (_users.length > 1)
                     CircleButton(
                       Text("-"),
-                      _removeUser,
+                      onPress: _removeUser,
                       color: Colors.red,
                     ),
                 ],
