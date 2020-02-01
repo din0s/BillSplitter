@@ -9,25 +9,6 @@ enum Denomination {
   EURO_20,
 }
 
-int denomIndex(int amount) {
-  if (amount > 1000) {
-    return Denomination.values.indexOf(Denomination.EURO_20);
-  } else if (amount > 500) {
-    return Denomination.values.indexOf(Denomination.EURO_10);
-  } else if (amount > 200) {
-    return Denomination.values.indexOf(Denomination.EURO_5);
-  } else if (amount > 100) {
-    return Denomination.values.indexOf(Denomination.EURO_2);
-  } else if (amount > 50) {
-    return Denomination.values.indexOf(Denomination.EURO_1);
-  } else if (amount > 20) {
-    return Denomination.values.indexOf(Denomination.CENT_50);
-  } else if (amount > 10) {
-    return Denomination.values.indexOf(Denomination.CENT_20);
-  }
-  return 0;
-}
-
 double denomModifier(Denomination denom) {
   return denomCents(denom) / 100.0;
 }

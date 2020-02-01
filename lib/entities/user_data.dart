@@ -25,12 +25,14 @@ class Wallet {
     });
   }
 
+  bool get hasDeposits => deposits.isNotEmpty;
+
   Tuple2<Denomination, String> pop(Denomination denom) {
-    if (money[denom] == 0) {
+    if (money[denom] == 0 || !deposits.any((t) => t.item1 == denom)) {
       return null;
     }
     money[denom]--;
-    final donor = deposits.firstWhere((t) => t.item1.index == denom.index);
+    final donor = deposits.firstWhere((t) => t.item1 == denom);
     deposits.remove(donor);
     return donor;
   }
@@ -53,32 +55,22 @@ class UserDebit {
 class UserPayoff {
   final String name;
   final int price;
+  int owed = 0;
   final Map<Denomination, int> paid;
-  final Map<Denomination, int> owed;
   final Wallet refund = Wallet();
 
   String get details {
     final paidList = List<String>();
-    final owedList = List<String>();
     Denomination.values.reversed.forEach((d) {
       final label = denomLabel(d);
       if (paid != null && paid[d] != 0) {
         paidList.add("${paid[d]} x $label");
       }
-      if (owed != null && owed[d] != 0) {
-        owedList.add("${owed[d]} x $label");
-      }
     });
-    if (paidList.isEmpty && owedList.isEmpty) {
+    if (paidList.isEmpty) {
       return price == 0 ? "FREE" : "CANNOT AFFORD TO PAY";
     }
-    if (paidList.isEmpty) {
-      return "OWED: ${owedList.join(", ")}";
-    }
-    if (owedList.isEmpty) {
-      return paidList.join(", ");
-    }
-    return "${paidList.join(", ")}\nOWED: ${owedList.join(", ")}";
+    return paidList.join(", ");
   }
 
   bool get hasRefund => refund.total != 0.0;
@@ -87,7 +79,7 @@ class UserPayoff {
     final info = List<String>();
     refund.money.forEach((k, v) {
       for (int i = 0; i < v; i++) {
-        final tup = refund.deposits.firstWhere((t) => t.item1.index == k.index);
+        final tup = refund.deposits.firstWhere((t) => t.item1 == k);
         refund.deposits.remove(tup);
         info.add("- 1 x ${denomLabel(k)} from ${tup.item2}");
       }

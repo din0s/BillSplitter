@@ -72,7 +72,6 @@ class _UserContainerState extends State<UserContainer> {
       onSaved: (val) => {widget.data.name = val},
       controller: _nController,
       focusNode: _nFocus,
-      autofocus: true,
       validator: (val) {
         if (val.isEmpty) {
           return "Your name cannot be empty!";

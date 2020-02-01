@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:bill_splitter/entities/denomination.dart';
 import 'package:bill_splitter/entities/user_data.dart';
 import 'package:bill_splitter/fragments/circle_button.dart';
@@ -17,36 +15,15 @@ class ResultPopup extends StatelessWidget {
 
   void _charge(List<UserDebit> debit) {
     debit.forEach((u) {
-      int remainder = u.price;
-      final balance = Map.from(u.balance);
-      final payment = Wallet();
-
-      void _check(bool exact) {
-        for (int i = denomIndex(remainder); i >= 0; i--) {
-          if (exact ? remainder == 0 : remainder <= 0) {
-            break;
-          }
-          Denomination d = Denomination.values[i];
-          if (balance[d] == 0) {
-            continue;
-          }
-          int value = denomCents(d);
-          if (remainder >= value || !exact) {
-            i++;
-            balance[d]--;
-            remainder -= value;
-            payment.money[d]++;
-          }
-        }
-      }
-
-      _check(true);
-      if (remainder == 0) {
+      Map<Denomination, int> balance = Map.from(u.balance);
+      Wallet payment = Wallet();
+      if (_check(u.price, balance, payment, true) == 0) {
         bank.add(payment, u.name);
         payoff.add(UserPayoff(u.name, u.price, payment.money, null));
       } else {
-        _check(false);
-        if (remainder < 0) {
+        balance = Map.from(u.balance);
+        payment = Wallet();
+        if (_check(u.price, balance, payment, false) < 0) {
           bank.add(payment, u.name);
           payoff.add(UserPayoff(
             u.name,
@@ -55,14 +32,38 @@ class ResultPopup extends StatelessWidget {
             _findExtra(u.price, payment.total),
           ));
         } else {
-          log("${u.name} CANNOT pay off ${u.price}");
           payoff.add(UserPayoff(u.name, u.price, null, null));
         }
       }
     });
   }
 
-  Map<Denomination, int> _findExtra(int paid, int total) {
+  int _check(
+      int remainder,
+      Map<Denomination, int> balance,
+      Wallet payment,
+      bool exact,
+      ) {
+    for (int i = Denomination.values.length - 1; i >= 0; i--) {
+      if (exact ? remainder == 0 : remainder <= 0) {
+        break;
+      }
+      Denomination d = Denomination.values[i];
+      if (balance[d] == 0) {
+        continue;
+      }
+      int value = denomCents(d);
+      if (remainder >= value || !exact) {
+        i++;
+        balance[d]--;
+        remainder -= value;
+        payment.money[d]++;
+      }
+    }
+    return remainder;
+  }
+
+  int _findExtra(int paid, int total) {
     int diff = total - paid;
     final result = Wallet();
     for (int i = Denomination.values.length - 1; i >= 0; i--) {
@@ -77,15 +78,14 @@ class ResultPopup extends StatelessWidget {
         i++;
       }
     }
-    return result.money;
+    return result.total;
   }
 
   void _refund() {
     payoff.where((u) => u.owed != null).forEach((u) {
-      final owed = Wallet.from(u.owed);
-      var refund = owed.total;
-      for (int i = denomIndex(refund); i >= 0; i--) {
-        if (refund == 0) {
+      var refund = u.owed;
+      for (int i = Denomination.values.length - 1; i >= 0; i--) {
+        if (refund == 0 || !bank.hasDeposits) {
           break;
         }
         Denomination denom = Denomination.values[i];
@@ -95,14 +95,17 @@ class ResultPopup extends StatelessWidget {
         final value = denomCents(denom);
         if (refund >= value) {
           final withdraw = bank.pop(denom);
+          if (withdraw == null) {
+            continue;
+          }
           final _map = Map<Denomination, int>();
           _map[withdraw.item1] = 1;
           u.refund.add(Wallet.from(_map), withdraw.item2);
-          u.owed[denom]--;
           refund -= value;
           i++;
         }
       }
+      u.owed = refund;
     });
   }
 
@@ -150,12 +153,25 @@ class ResultPopup extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
-                        Text(
-                          "${user.name} (${user.price / 100.0}€)",
-                          style: TextStyle(
-                            fontSize: 18,
-                            decoration: TextDecoration.underline,
-                          ),
+                        Row(
+                          children: <Widget>[
+                            Text(
+                              "${user.name} (${user.price / 100.0}€)",
+                              style: TextStyle(
+                                fontSize: 18,
+                                decoration: TextDecoration.underline,
+                              ),
+                            ),
+                            SizedBox(width: 8),
+                            if (user.owed != null && user.owed > 0)
+                              Text(
+                                "-${user.owed / 100.0}€",
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.red,
+                                ),
+                              ),
+                          ],
                         ),
                         SizedBox(height: 4),
                         Text(
