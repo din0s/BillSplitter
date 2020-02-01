@@ -16,6 +16,14 @@ class Wallet {
         .forEach((d) => money[d] += map[d]);
   }
 
+  void copy(Wallet other) {
+    Denomination.values
+        .where((d) => other.money[d] != null)
+        .forEach((d) => money[d] += other.money[d]);
+    deposits.clear();
+    deposits.addAll(other.deposits);
+  }
+
   void add(Wallet other, String from) {
     Denomination.values.forEach((d) {
       money[d] += other.money[d];
@@ -55,7 +63,7 @@ class UserDebit {
 class UserPayoff {
   final String name;
   final int price;
-  int owed = 0;
+  int owed;
   final Map<Denomination, int> paid;
   final Wallet refund = Wallet();
 
@@ -87,5 +95,5 @@ class UserPayoff {
     return "REFUND:\n${info.join("\n")}";
   }
 
-  UserPayoff(this.name, this.price, this.paid, this.owed);
+  UserPayoff(this.name, this.price, this.paid, { this.owed });
 }

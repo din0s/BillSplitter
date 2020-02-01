@@ -17,68 +17,71 @@ class ResultPopup extends StatelessWidget {
     debit.forEach((u) {
       Map<Denomination, int> balance = Map.from(u.balance);
       Wallet payment = Wallet();
-      if (_check(u.price, balance, payment, true) == 0) {
+      if (_check(u.price, balance, payment, true)) {
         bank.add(payment, u.name);
-        payoff.add(UserPayoff(u.name, u.price, payment.money, null));
+        payoff.add(UserPayoff(u.name, u.price, payment.money));
       } else {
         balance = Map.from(u.balance);
         payment = Wallet();
-        if (_check(u.price, balance, payment, false) < 0) {
+        if (_check(u.price, balance, payment, false)) {
           bank.add(payment, u.name);
           payoff.add(UserPayoff(
             u.name,
             u.price,
             payment.money,
-            _findExtra(u.price, payment.total),
+            owed: payment.total - u.price
           ));
         } else {
-          payoff.add(UserPayoff(u.name, u.price, null, null));
+          payoff.add(UserPayoff(u.name, u.price, null));
         }
       }
     });
   }
 
-  int _check(
-      int remainder,
+  bool _check(
+      int total,
       Map<Denomination, int> balance,
       Wallet payment,
       bool exact,
       ) {
-    for (int i = Denomination.values.length - 1; i >= 0; i--) {
+    int baseIndex = denomIndex(total);
+    int remainder = total;
+    Map<Denomination, int> _bal = Map.from(balance);
+    Wallet _wallet = Wallet();
+    for (int i = baseIndex; i >= 0; i--) {
       if (exact ? remainder == 0 : remainder <= 0) {
         break;
       }
       Denomination d = Denomination.values[i];
-      if (balance[d] == 0) {
+      if (_bal[d] == 0) {
         continue;
       }
       int value = denomCents(d);
       if (remainder >= value || !exact) {
         i++;
-        balance[d]--;
+        _bal[d]--;
         remainder -= value;
-        payment.money[d]++;
+        _wallet.money[d]++;
       }
     }
-    return remainder;
-  }
-
-  int _findExtra(int paid, int total) {
-    int diff = total - paid;
-    final result = Wallet();
-    for (int i = Denomination.values.length - 1; i >= 0; i--) {
-      if (diff == 0) {
-        break;
-      }
-      Denomination denom = Denomination.values[i];
-      int value = denomCents(denom);
-      if (diff >= value) {
-        diff -= value;
-        result.money[denom]++;
-        i++;
+    if (remainder > 0) {
+      remainder = total;
+      _bal = Map.from(balance);
+      for (int i = baseIndex + 1; i < Denomination.values.length; i++) {
+        Denomination d = Denomination.values[i];
+        if (_bal[d] != 0) {
+          _bal[d]--;
+          _wallet.money[d]++;
+          break;
+        }
       }
     }
-    return result.total;
+    if (exact ? remainder == 0 : remainder <= 0) {
+      _bal.forEach((k, v) => balance[k] = v);
+      payment.copy(_wallet);
+      return true;
+    }
+    return false;
   }
 
   void _refund() {
@@ -163,7 +166,7 @@ class ResultPopup extends StatelessWidget {
                               ),
                             ),
                             SizedBox(width: 8),
-                            if (user.owed != null && user.owed > 0)
+                            if (user.owed != null)
                               Text(
                                 "-${user.owed / 100.0}€",
                                 style: TextStyle(
