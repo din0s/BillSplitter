@@ -64,7 +64,7 @@ class ResultPopup extends StatelessWidget {
         _wallet.money[d]++;
       }
     }
-    if (remainder > 0) {
+    if (!exact && remainder > 0) {
       remainder = total;
       _bal = Map.from(balance);
       for (int i = baseIndex + 1; i < Denomination.values.length; i++) {
@@ -72,6 +72,7 @@ class ResultPopup extends StatelessWidget {
         if (_bal[d] != 0) {
           _bal[d]--;
           _wallet.money[d]++;
+          remainder -= denomCents(d);
           break;
         }
       }
@@ -166,7 +167,7 @@ class ResultPopup extends StatelessWidget {
                               ),
                             ),
                             SizedBox(width: 8),
-                            if (user.owed != null)
+                            if (user.owed != null && user.owed > 0)
                               Text(
                                 "-${user.owed / 100.0}€",
                                 style: TextStyle(

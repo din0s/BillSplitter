@@ -3,7 +3,7 @@ import 'package:tuple/tuple.dart';
 
 class Wallet {
   final money = Map<Denomination, int>();
-  final Set<Tuple2<Denomination, String>> deposits = Set();
+  final List<Tuple2<Denomination, String>> deposits = List();
 
   Wallet() {
     Denomination.values.forEach((d) => money[d] = 0);
@@ -29,6 +29,9 @@ class Wallet {
       money[d] += other.money[d];
       if (other.money[d] != 0) {
         deposits.add(Tuple2(d, from));
+        for (int i = 0; i < other.money[d]; i++) {
+          deposits.add(Tuple2(d, from));
+        }
       }
     });
   }
