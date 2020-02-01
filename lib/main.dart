@@ -1,6 +1,8 @@
 import 'package:bill_splitter/entities/user_data.dart';
 import 'package:bill_splitter/fragments/circle_button.dart';
+import 'package:bill_splitter/result_popup.dart';
 import 'package:bill_splitter/user_container.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
 void main() => runApp(MyApp());
@@ -69,9 +71,11 @@ class _MyHomePageState extends State<MyHomePage> {
     } else if (!_form.currentState.validate()) {
       _error("There are errors in the input fields!");
     } else {
+      _key.currentState.hideCurrentSnackBar();
       _form.currentState.save();
-      final userData = List<UserData>();
+      final userData = List<UserDebit>();
       _users.forEach((e) => userData.add(e.data));
+      showDialog(context: context, child: ResultPopup(userData));
     }
   }
 

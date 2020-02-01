@@ -9,14 +9,43 @@ class UserContainer extends StatefulWidget {
   @override
   _UserContainerState createState() => _UserContainerState();
 
-  final UserData data = UserData();
+  final UserDebit data = UserDebit();
 }
 
 class _UserContainerState extends State<UserContainer> {
+  final _nController = TextEditingController(text: "Bob");
+  final _nFocus = FocusNode();
+  final _pController = TextEditingController(text: "0.0");
+  final _pFocus = FocusNode();
   final _bController = TextEditingController(text: "0.0");
 
   @override
+  void initState() {
+    super.initState();
+    _nFocus.addListener(() {
+      if (_nFocus.hasFocus) {
+        _nController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _nController.text.length,
+        );
+      }
+    });
+    _pFocus.addListener(() {
+      if (_pFocus.hasFocus) {
+        _pController.selection = TextSelection(
+          baseOffset: 0,
+          extentOffset: _pController.text.length,
+        );
+      }
+    });
+  }
+
+  @override
   void dispose() {
+    _nController.dispose();
+    _nFocus.dispose();
+    _pController.dispose();
+    _pFocus.dispose();
     _bController.dispose();
     super.dispose();
   }
@@ -41,7 +70,9 @@ class _UserContainerState extends State<UserContainer> {
       autovalidate: true,
       decoration: InputDecoration(labelText: "Name"),
       onSaved: (val) => {widget.data.name = val},
-      initialValue: "Bob",
+      controller: _nController,
+      focusNode: _nFocus,
+      autofocus: true,
       validator: (val) {
         if (val.isEmpty) {
           return "Your name cannot be empty!";
@@ -62,8 +93,10 @@ class _UserContainerState extends State<UserContainer> {
             labelText: "Price",
             suffix: Text("€", style: TextStyle(fontSize: 18)),
           ),
-          onSaved: (val) => {widget.data.price = double.parse(val)},
-          initialValue: "0.0",
+          onSaved: (val) =>
+              {widget.data.price = (double.parse(val) * 100).round()},
+          controller: _pController,
+          focusNode: _pFocus,
           validator: (val) {
             if (val.isEmpty) {
               return "Enter the price you paid!";
